@@ -1,8 +1,43 @@
-chrome.runtime.onMessage.addListener( data => {
-	if ( data.type === 'notification' ) {
-		notify( data.message );
+var curVal;
+
+// chrome.runtime.onMessage.addListener( data => {
+// 	if ( data.type === 'notification' ) {
+// 		notify( data.message );
+// 	}
+// });
+
+chrome.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+	  console.log(sender.tab ?
+				  "from a content script:" + sender.tab.url :
+				  "from the extension");
+	  if (request.activate === "yes") {
+		chrome.storage.local.get(['links', 'notifyCount'], function(result){
+			fetch('http://localhost:3000/log',{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				action: "test",
+				content: result.links,
+				number: result.notifyCount
+			}),
+		})
+		.then(response => response.json())
+		.then(data => {
+			console.log('Success:', data);
+		})
+		.catch((error) => {
+			console.error('Error:', error);
+		});
+		sendResponse({farewell: "goodbye"});
+
+		})
+		
+	  }
 	}
-});
+  );
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	console.log(tabId);
@@ -34,6 +69,13 @@ chrome.runtime.onInstalled.addListener( () => {
 		contexts:[ "selection" ]
 	});
 });
+
+chrome.runtime.onStartup.addListener( () => {
+	curVal = 0;
+	chrome.storage.local.set({"notifyCount": curVal}, function() {
+		//console.log(`Value is set to ` + curURL);
+	});
+})
 
 // chrome.contextMenus.onClicked.addListener( ( info, tab ) => {
 // 	if ( 'notify' === info.menuItemId ) {
