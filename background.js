@@ -6,76 +6,69 @@ var curVal;
 // 	}
 // });
 
-chrome.runtime.onMessage.addListener(
-	function(request, sender, sendResponse) {
-	  console.log(sender.tab ?
-				  "from a content script:" + sender.tab.url :
-				  "from the extension");
-	  if (request.activate === "yes") {
-		chrome.storage.local.get(['links', 'notifyCount'], function(result){
-			fetch('http://localhost:3000/log',{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				action: "test",
-				content: result.links,
-				number: result.notifyCount
-			}),
-		})
-		.then(response => response.json())
-		.then(data => {
-			console.log('Success:', data);
-		})
-		.catch((error) => {
-			console.error('Error:', error);
-		});
-		sendResponse({farewell: "goodbye"});
-
-		})
-		
-	  }
-	}
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  console.log(
+    sender.tab
+      ? "from a content script:" + sender.tab.url
+      : "from the extension"
   );
-
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-	console.log(tabId);
-	console.log(changeInfo);
-	console.log(tab);
-	console.log(tab.url);
-})
-
-chrome.storage.onChanged.addListener( function (changes, namespace) {
-	
-	console.log(changes.notify.oldValue);
-	for(let [key, {oldValue, newValue}] of Object.entries(changes)){
-		console.log(`the values key ` + key);
-		console.log(`the values are ${oldValue} and ${newValue}`);
-	}
-	
-	console.log(`the namespaces are ` + namespace);
-	chrome.storage.local.get(function(result){
-		console.log(result);
-	})
-})
-
-
-
-chrome.runtime.onInstalled.addListener( () => {
-	chrome.contextMenus.create({
-		id: 'notify',
-		title: "Notify!: %s", 
-		contexts:[ "selection" ]
-	});
+  if (request.activate === "yes") {
+    chrome.storage.local.get(
+      ["links", "notifyCount", "Summary"],
+      function (result) {
+        fetch("http://localhost:3000/log", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "test",
+            content: result.links,
+            number: result.notifyCount,
+            summary: result.Summary,
+          }),
+        });
+      }
+    );
+    sendResponse({ farewell: "goodbye" });
+  }
 });
 
-chrome.runtime.onStartup.addListener( () => {
-	curVal = 0;
-	chrome.storage.local.set({"notifyCount": curVal}, function() {
-		//console.log(`Value is set to ` + curURL);
-	});
-})
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  console.log(tabId);
+  console.log(changeInfo);
+  console.log(tab);
+  console.log(tab.url);
+});
+
+// chrome.storage.onChanged.addListener( function (changes, namespace) {
+
+// 	console.log(changes.notify.oldValue);
+// 	for(let [key, {oldValue, newValue}] of Object.entries(changes)){
+// 		console.log(`the values key ` + key);
+// 		console.log(`the values are ${oldValue} and ${newValue}`);
+// 	}
+
+// 	console.log(`the namespaces are ` + namespace);
+// 	chrome.storage.local.get(function(result){
+// 		console.log(result);
+// 	})
+// })
+
+// chrome.runtime.onInstalled.addListener( () => {
+// 	chrome.contextMenus.create({
+// 		id: 'notify',
+// 		title: "Notify!: %s",
+// 		contexts:[ "selection" ]
+// 	});
+// });
+
+// chrome.runtime.onStartup.addListener( () => {
+// 	curVal = 0;
+// 	chrome.storage.local.set({"notifyCount": curVal}, function() {
+// 		//console.log(`Value is set to ` + curURL);
+// 	});
+// })
 
 // chrome.contextMenus.onClicked.addListener( ( info, tab ) => {
 // 	if ( 'notify' === info.menuItemId ) {
@@ -99,4 +92,3 @@ chrome.runtime.onStartup.addListener( () => {
 // 		}
 // 	);
 // };
-
